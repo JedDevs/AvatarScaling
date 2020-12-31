@@ -23,6 +23,20 @@ local function checkTableNumber(table)
 	return true, "valid"
 end
 
+function  HumanoidDescription:UpdateDescription()
+	self.newDescription = self.humanoid:GetAppliedDescription()
+	
+	for index, property in ipairs(self.searchTable) do
+		local val = self.sizes
+		if type(val) == "table" then
+			val = val[index]
+		end
+		self.newDescription[property] = val
+	end
+
+	return self.newDescription
+end
+
 function HumanoidDescription.new(player: Instance, types: any, sizes: any)
 	local sizesSuccess, sizesResult = checkTableNumber(sizes)
 	if typeof(sizes) == "table" and not sizesSuccess then return sizesSuccess, sizesResult end
@@ -30,38 +44,36 @@ function HumanoidDescription.new(player: Instance, types: any, sizes: any)
 	local self = {
 		character = player.Character or player.CharacterAdded:Wait(),
 		_maid = Maid.new(),
+
+		searchTable = {},
+		sizes = sizes
 	}
 
-	self.humanoid = self.character:WaitForChild("Humanoid")
-	self.oldDescription = self.humanoid:FindFirstChild("HumanoidDescription"):Clone() or Instance.new("HumanoidDescription")
-	self.newDescription = self.humanoid:GetAppliedDescription()
+	if not player.CharacterAppearanceLoaded then
+        player.CharacterAppearanceLoaded:Wait()
+    end
+	print("Player Character Appearance Loaded")
 
-	self.oldDescription.Parent,self.newDescription.Parent = script, script
-	local searchTable = {}
+	self.humanoid = self.character:WaitForChild("Humanoid")
+	self.oldDescription = self.humanoid:GetAppliedDescription()
 
 	if typeof(types) == "string" and string.lower(types) == "all" then
-		searchTable = MODIFIABLE_DESCRIPTIONS
+		self.searchTable = MODIFIABLE_DESCRIPTIONS
 	elseif typeof(types) == "table" then
-		searchTable = types
+		self.searchTable = types
 	else
 		return false, TYPE_ERROR.." and/or "..SIZE_ERROR
 	end
 
-	for index, property in ipairs(searchTable) do
-		local val = sizes
-		if type(val) == "table" then
-			val = val[index]
-		end
-		self.newDescription[property] = val
-	end
-
 	setmetatable(self, HumanoidDescription)
+
+	self:UpdateDescription()
 	return true, self
 end
 
 function HumanoidDescription:ApplyDescription()
 	if not self.newDescription or not self.humanoid then return end
-	self.humanoid:ApplyDescription(self.newDescription)
+	self.humanoid:ApplyDescription(self:UpdateDescription())
 end
 
 function HumanoidDescription:RevertDescription()
