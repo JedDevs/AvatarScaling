@@ -37,11 +37,17 @@ function  HumanoidDescription:UpdateDescription()
 	return self.newDescription
 end
 
+function HumanoidDescription:RefreshCharacter(player)
+	self.character = player.Character or player.CharacterAdded:Wait()
+	self.humanoid = self.character:WaitForChild("Humanoid")
+end
+
 function HumanoidDescription.new(player: Instance, types: any, sizes: any)
 	local sizesSuccess, sizesResult = checkTableNumber(sizes)
 	if typeof(sizes) == "table" and not sizesSuccess then return sizesSuccess, sizesResult end
 	if typeof(types) == "string" and (string.lower(types) ~= "all" and not table.find(MODIFIABLE_DESCRIPTIONS, string.lower(types))) then return false, TYPE_ERROR end
 	local self = {
+		player = player,
 		character = player.Character or player.CharacterAdded:Wait(),
 		_maid = Maid.new(),
 
